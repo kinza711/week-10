@@ -14,6 +14,9 @@ import { configureApp } from '../src/configure-app';
 describe('Auth (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
+  // Captured once in beforeAll, so the "registers a user" test can assert
+  // against it without re-registering -- see note below.
+  let registerResponse: request.Response;
 
   const testEmail = `e2e-auth-${Date.now()}@example.com`;
   const testPassword = 'correct-horse-battery-staple';
@@ -28,6 +31,17 @@ describe('Auth (e2e)', () => {
     await app.init();
 
     dataSource = moduleFixture.get(DataSource);
+
+    // Register the one shared user HERE, in beforeAll, not as its own it().
+    // Every other test in this file needs this user to already exist --
+    // putting registration in its own it() only worked by luck, because
+    // Jest happened to run it() blocks in file order. Under --randomize,
+    // "logs in" could run before "registers", and fail with 401 for a
+    // reason that had nothing to do with login itself.
+    registerResponse = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email: testEmail, password: testPassword })
+      .expect(201);
   });
 
   afterAll(async () => {
@@ -38,15 +52,11 @@ describe('Auth (e2e)', () => {
     await app.close();
   });
 
-  it('registers a user without leaking the password or hash', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/auth/register')
-      .send({ email: testEmail, password: testPassword })
-      .expect(201);
-
-    expect(res.body.password).toBeUndefined();
-    expect(res.body.passwordHash).toBeUndefined();
-    expect(res.body.email).toBe(testEmail);
+  it('registers a user without leaking the password or hash', () => {
+    // No request here anymore -- just asserting on what beforeAll already did.
+    expect(registerResponse.body.password).toBeUndefined();
+    expect(registerResponse.body.passwordHash).toBeUndefined();
+    expect(registerResponse.body.email).toBe(testEmail);
   });
 
   it('rejects a wrong password with 401', async () => {
