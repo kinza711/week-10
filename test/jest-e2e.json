@@ -1,0 +1,20 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "collectCoverage": true,
+  "collectCoverageFrom": ["src/**/*.service.ts"],
+  "coverageDirectory": "./coverage-e2e",
+  "coverageThreshold": {
+    "global": {
+      "statements": 70
+    },
+    "./src/**/*.service.ts": {
+      "statements": 70
+    }
+  }
+}
