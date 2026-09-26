@@ -10,12 +10,16 @@ import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { CommentsModule } from "./comments/comments.module";
 import { AuthorizationModule } from "./authorization/authorization.module";
+import { envValidationSchema } from "./config/env.validation";
+import { HealthModule } from "./health/health.module";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === "test" ? ".env.test" : ".env",
+      validationSchema: envValidationSchema,
+      validationOptions: { abortEarly: false },
     }),
     // Problem W1. A generous app-wide default; individual auth routes
     // tighten this further with their own @Throttle() (see
@@ -40,6 +44,7 @@ import { AuthorizationModule } from "./authorization/authorization.module";
     ProjectsModule,
     TasksModule,
     CommentsModule,
+    HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
